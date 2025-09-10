@@ -1,19 +1,22 @@
-FROM node:24-alpine
+FROM node:18-alpine
 
-# Create app user and group
-RUN addgroup app && adduser -S -G app app
+# Set working directory
+WORKDIR /app
 
-WORKDIR /usr/src/app
-
-# Copy package files and install dependencies as root
+# Copy dependency files first (better caching)
 COPY package*.json ./
-RUN npm ci --omit=dev
 
-# Copy rest of the app
+# Install dependencies
+RUN npm ci
+
+# Copy source code
 COPY . .
 
-# Switch to non-root user for runtime
-USER app
+# Run tests during build (optional but recommended)
+RUN npm test
 
-EXPOSE 3000
-CMD ["node", "index.js"]
+# Build step
+RUN npm run build
+
+# Runtime command
+CMD ["npm", "start"]
